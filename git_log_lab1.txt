@@ -1,0 +1,5 @@
+* 4afbd04 (HEAD -> master) Add positional argument handling and report output
+* 347cdcf Implement command substitution for system metrics
+* e217a34 Demonstrated and explained Bash quoting rules
+* ea365a0 Added shebang and header
+* 5684ec0 Initial commit: project skeleton and README

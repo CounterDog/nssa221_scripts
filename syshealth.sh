@@ -10,8 +10,8 @@
 HOSTNAME=$(hostname)
 CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
-echo "Hostname without quotes: $HOSTNAME" # works here but dangerous later
-echo "Hostname with quotes: \"$HOSTNAME\"" # always do this
+# echo "Hostname without quotes: $HOSTNAME" # works here but dangerous later
+# echo "Hostname with quotes: \"$HOSTNAME\"" # always do this
 
 # Add a comment explaining the difference (required for marks):
 # The difference between double quotation marks and no quotation marks is that, for arguments that contain spaces, Bash will separate an argument by the space and treat it as two separate arguments.
