@@ -17,3 +17,9 @@ echo "Hostname with quotes: \"$HOSTNAME\"" # always do this
 # The difference between double quotation marks and no quotation marks is that, for arguments that contain spaces, Bash will separate an argument by the space and treat it as two separate arguments.
 # For instance, for a hostname named "my computer", Bash will expand "echo $HOSTNAME" to "echo my computer". This is called wordsplitting.
 # Double quotes prevent wordsplitting by wrapping them into a single string argument.
+
+# --- System metrics collection ---
+UPTIME=$(uptime -p)
+DISK_USAGE=$(df -h / | tail -1)
+MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+PROCESS_COUNT=$(ps -e | wc -l)
