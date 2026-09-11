@@ -1,0 +1,13 @@
+* 9cd6e86 (HEAD -> master) Testing on potentially unhealthy system
+* 72574c9 Add for-loop over multiple mount points and update exit code h andling
+* fe781c8 Add parsing and conditional checks for disk, memory, and CPU
+* 5b47f01 Implement print_status function with color-coded output
+* 7ceb584 Add threshold variables for CPU, MEM, and DISK
+* c00e29b Testing before making changes
+* 5a09783 Add backup file
+* 31d0c3c Commented double quotation demonstration
+* 4afbd04 Add positional argument handling and report output
+* 347cdcf Implement command substitution for system metrics
+* e217a34 Demonstrated and explained Bash quoting rules
+* ea365a0 Added shebang and header
+* 5684ec0 Initial commit: project skeleton and README
