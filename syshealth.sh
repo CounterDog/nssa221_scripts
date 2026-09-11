@@ -9,6 +9,17 @@ CPU_THRESHOLD=75
 MEM_THRESHOLD=85
 DISK_THRESHOLD=85
 
+print_status() {
+    local status="$1"
+    local message="$2"
+
+    if [ "$status" = "OK" ]; then
+        echo -e "\e[32m OK: $message\e[0m"
+    else
+        echo -e "\e[31m ALERT: $message\e[0m"
+    fi
+}
+
 # --- Variables and quoting demonstration ---
 HOSTNAME=$(hostname)
 CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
