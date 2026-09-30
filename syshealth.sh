@@ -33,7 +33,6 @@ PROCESS_COUNT=$(ps -e | wc -l)
 # --- Parse numeric percentages for threshold comparison --- 
 DISK_PCT=$(df / | tail -1 | awk '{gsub("%",""); print $5}')
 MEM_PCT=$(free | awk '/Mem:/ {printf "%.0f", $3/$2*100}')
-ls
 CPU_PCT=$(top -bn1 | grep '^%Cpu' | awk '{print 100 - $8}' | cut -d. -f1)
 
 # --- Health checks with conditionals and color-coded output ---
