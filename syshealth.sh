@@ -72,15 +72,42 @@ check_cpu_usage() {
     fi
 }
 
+run_health_checks() {
+    local overall_status=0
+    print_status "CHECK" "Running system health analysis..."
+
+    # Disk checks via loop (replaces the inline for-loop from Lab 2)
+    for mount in / /home /var; do
+        if ! check_disk_usage "$mount"; then
+            overall_status=1
+        fi
+    done
+
+    # Memory check
+    if ! check_memory_usage; then
+        overall_status=1
+    fi
+
+    # CPU check
+    if ! check_cpu_usage; then
+        overall_status=1
+    fi
+
+    # Store result for generate_report / exit
+    HEALTH_STATUS="$overall_status"
+
+    return "$overall_status"
+}
+
 main() {
     # This will be the ONLY code that runs at the top level
     # parse_arguments "$@"
-    # run_health_checks
+    run_health_checks
     # generate_report
-    check_cpu_usage
-    check_disk_usage
-    check_memory_usage
-    print_status "OK"
+    # check_cpu_usage
+    # check_disk_usage
+    # check_memory_usage
+    # print_status "OK"
 }
 
 main
