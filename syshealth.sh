@@ -99,15 +99,49 @@ run_health_checks() {
     return "$overall_status"
 }
 
+parse_arguments() {
+    OUTPUT_FILE="${1:-}" # if $1 is given, use it as output file; otherwise
+    empty
+}
+
+generate_report() {
+    # Re-collect the human-readable metrics (same as Lab 1)
+    local CURRENT_DATE HOSTNAME UPTIME DISK_USAGE MEMORY_USAGE PROCESS_COUNT
+
+    CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+    HOSTNAME=$(hostname)
+    UPTIME=$(uptime -p)
+    DISK_USAGE=$(df -h / | tail -1)
+    MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+    PROCESS_COUNT=$(ps -e | wc -l)
+
+    printf "========================================\n"
+    printf "System Health Report - %s\n" "$CURRENT_DATE"
+    printf "Hostname : %s\n" "$HOSTNAME"
+    printf "Uptime : %s\n" "$UPTIME"
+    printf "Disk / : %s\n" "$DISK_USAGE"
+    printf "Memory used : %s\n" "$MEMORY_USAGE"
+    printf "Total processes : %s\n" "$PROCESS_COUNT"
+    printf "Health status : %s\n" "$([ "${HEALTH_STATUS:-0}" -eq 0 ] && echo "HEALTHY" || echo "UNHEALTHY - see alerts above")"
+    printf "========================================\n"
+}
+
 main() {
-    # This will be the ONLY code that runs at the top level
-    # parse_arguments "$@"
+    parse_arguments "$@"
+
+    # Run all health checks (prints colored alerts to terminal)
     run_health_checks
-    # generate_report
-    # check_cpu_usage
-    # check_disk_usage
-    # check_memory_usage
-    # print_status "OK"
+
+    # Generate the structured report (to screen or file)
+    if [ -n "$OUTPUT_FILE" ]; then
+        generate_report > "$OUTPUT_FILE"
+        echo "Report written to $OUTPUT_FILE"
+    else
+        generate_report
+    fi
+    
+    # Exit with the aggregated health status from run_health_checks
+    exit "${HEALTH_STATUS:-0}"
 }
 
 main
