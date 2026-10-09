@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # ===============================================
 # syshealth.sh - System Health & Log Analysis Toolkit
+# Lab 3 - Refactoring into Functions
 # Author: Jonathan Jiang
+# Date: 2026-9-30
 # ===============================================
-
-# --- Thresholds ---
+# --- Thresholds (global, used by multiple functions) ---
 CPU_THRESHOLD=75
 MEM_THRESHOLD=85
 DISK_THRESHOLD=85
@@ -20,72 +21,100 @@ print_status() {
     fi
 }
 
-# --- Variables and quoting demonstration ---
-HOSTNAME=$(hostname)
-CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+check_disk_usage() {
+    local mount="$1"
+    local pct threshold
+    threshold="$DISK_THRESHOLD"
 
-# --- System metrics collection ---
-UPTIME=$(uptime -p)
-DISK_USAGE=$(df -h / | tail -1)
-MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
-PROCESS_COUNT=$(ps -e | wc -l)
-
-# --- Parse numeric percentages for threshold comparison --- 
-DISK_PCT=$(df / | tail -1 | awk '{gsub("%",""); print $5}')
-MEM_PCT=$(free | awk '/Mem:/ {printf "%.0f", $3/$2*100}')
-CPU_PCT=$(top -bn1 | grep '^%Cpu' | awk '{print 100 - $8}' | cut -d. -f1)
-
-# --- Health checks with conditionals and color-coded output ---
-print_status "CHECK" "Running system health analysis..."
-HEALTH_STATUS=0 # 0 = healthy (no alerts). Will be set to 1 if any check fails
-
-# Disk check for root filesystem
-if (( DISK_PCT > DISK_THRESHOLD )); then
-    print_status "ALERT" "Disk usage on / is ${DISK_PCT}% (threshold ${DISK_THRESHOLD}%)"
-    HEALTH_STATUS=1
-else
-    print_status "OK" "Disk usage on / is ${DISK_PCT}%"
-fi
-
-# --- Loop over multiple mount points ---
-for mount in / /home /var; do
-
-    if mountpoint -q "$mount" 2>/dev/null || [ "$mount" = "/" ]; then
-        PCT=$(df "$mount" | tail -1 | awk '{gsub("%",""); print $5}')
-
-        if (( PCT > DISK_THRESHOLD )); then
-            print_status "ALERT" "Disk usage on $mount is ${PCT}% (threshold${DISK_THRESHOLD}%)"
-            HEALTH_STATUS=1
-
-        else
-            print_status "OK" "Disk usage on $mount is ${PCT}%"
-        fi
-
-    else
-        print_status "OK" "Mount point $mount does not exist or is not a mountpoint on this system"
+    if ! mountpoint -q "$mount" 2>/dev/null && [ "$mount" != "/" ]; then
+        print_status "OK" "Mount point $mount does not exist on this system"
+        return 0
     fi
 
-done
+    pct=$(df "$mount" | tail -1 | awk '{gsub("%",""); print $5}')
 
-# Memory check
-if (( MEM_PCT > MEM_THRESHOLD )); then
-    print_status "ALERT" "Memory usage is ${MEM_PCT}% (threshold ${MEM_THRESHOLD}%)"
-    HEALTH_STATUS=1
-else
-    print_status "OK" "Memory usage is ${MEM_PCT}%"
-fi
+    if (( pct > threshold )); then
+        print_status "ALERT" "Disk usage on $mount is ${pct}% (threshold ${threshold}%)"
+        return 1
+    else
+        print_status "OK" "Disk usage on $mount is ${pct}%"
+        return 0
+    fi
+}
 
-# CPU check
-if (( CPU_PCT > CPU_THRESHOLD )); then
-    print_status "ALERT" "CPU usage is ${CPU_PCT}% (threshold ${CPU_THRESHOLD}%)"
-    HEALTH_STATUS=1
-else
-    print_status "OK" "CPU usage is ${CPU_PCT}%"
-fi
+check_memory_usage() {
+    local pct threshold
+    threshold="$MEM_THRESHOLD"
+    pct=$(free | awk '/Mem:/ {printf "%.0f", $3/$2*100}')
 
-# --- Output handling ---
-OUTPUT_FILE="${1:-}" # if $1 is given, use it; else print to screen
-print_report() {
+    if (( pct > threshold )); then
+        print_status "ALERT" "Memory usage is ${pct}% (threshold ${threshold}%)"
+        return 1
+
+    else
+        print_status "OK" "Memory usage is ${pct}%"
+        return 0
+    fi
+}
+    
+check_cpu_usage() {
+    local pct threshold
+    threshold="$CPU_THRESHOLD"
+    pct=$(top -bn1 | grep '^%Cpu' | awk '{print 100 - $8}' | cut -d. -f1)
+    
+    if (( pct > threshold )); then
+        print_status "ALERT" "CPU usage is ${pct}% (threshold ${threshold}%)"
+        return 1
+
+    else
+        print_status "OK" "CPU usage is ${pct}%"
+        return 0
+    fi
+}
+
+run_health_checks() {
+    local overall_status=0
+    print_status "CHECK" "Running system health analysis..."
+
+    # Disk checks via loop (replaces the inline for-loop from Lab 2)
+    for mount in / /home /var; do
+        if ! check_disk_usage "$mount"; then
+            overall_status=1
+        fi
+    done
+
+    # Memory check
+    if ! check_memory_usage; then
+        overall_status=1
+    fi
+
+    # CPU check
+    if ! check_cpu_usage; then
+        overall_status=1
+    fi
+
+    # Store result for generate_report / exit
+    HEALTH_STATUS="$overall_status"
+
+    return "$overall_status"
+}
+
+parse_arguments() {
+    OUTPUT_FILE="${1:-}" # if $1 is given, use it as output file; otherwise
+    empty
+}
+
+generate_report() {
+    # Re-collect the human-readable metrics (same as Lab 1)
+    local CURRENT_DATE HOSTNAME UPTIME DISK_USAGE MEMORY_USAGE PROCESS_COUNT
+
+    CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+    HOSTNAME=$(hostname)
+    UPTIME=$(uptime -p)
+    DISK_USAGE=$(df -h / | tail -1)
+    MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+    PROCESS_COUNT=$(ps -e | wc -l)
+
     printf "========================================\n"
     printf "System Health Report - %s\n" "$CURRENT_DATE"
     printf "Hostname : %s\n" "$HOSTNAME"
@@ -93,16 +122,26 @@ print_report() {
     printf "Disk / : %s\n" "$DISK_USAGE"
     printf "Memory used : %s\n" "$MEMORY_USAGE"
     printf "Total processes : %s\n" "$PROCESS_COUNT"
-    printf "Health status : %s\n" "$([ "$HEALTH_STATUS" -eq 0 ] && echo "HEALTHY" || echo "UNHEALTHY - see alerts above")"
+    printf "Health status : %s\n" "$([ "${HEALTH_STATUS:-0}" -eq 0 ] && echo "HEALTHY" || echo "UNHEALTHY - see alerts above")"
     printf "========================================\n"
 }
 
-if [ -n "$OUTPUT_FILE" ]; then
-    print_report > "$OUTPUT_FILE"
-    echo "Report written to $OUTPUT_FILE (alerts were printed to terminal)"
-else
-    print_report
-fi
+main() {
+    parse_arguments "$@"
 
-# Exit with 0 (healthy) or 1 (alerts triggered). This enables scripting / cron usage.
-exit "${HEALTH_STATUS:-0}"
+    # Run all health checks (prints colored alerts to terminal)
+    run_health_checks
+
+    # Generate the structured report (to screen or file)
+    if [ -n "$OUTPUT_FILE" ]; then
+        generate_report > "$OUTPUT_FILE"
+        echo "Report written to $OUTPUT_FILE"
+    else
+        generate_report
+    fi
+    
+    # Exit with the aggregated health status from run_health_checks
+    exit "${HEALTH_STATUS:-0}"
+}
+
+main
