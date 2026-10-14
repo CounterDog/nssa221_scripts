@@ -100,8 +100,7 @@ run_health_checks() {
 }
 
 parse_arguments() {
-    OUTPUT_FILE="${1:-}" # if $1 is given, use it as output file; otherwise
-    empty
+    OUTPUT_FILE="${1:-}" # if $1 is given, use it as output file; otherwise empty
 }
 
 generate_report() {
@@ -186,4 +185,4 @@ main() {
     exit "${HEALTH_STATUS:-0}"
 }
 
-main
+main "$@"
