@@ -1,0 +1,17 @@
+========================================
+System Health Report - 2026-10-14 10:15:20
+Hostname : Silver
+Uptime : up 31 minutes
+Disk / : /dev/nvme0n1p6  380G  168G  210G  45% /
+Memory used : 5.9Gi/62Gi
+Total processes : 423
+Health status : HEALTHY
+========================================
+
+========================================
+LOG ANALYSIS SUMMARY
+========================================
+
+Log Analysis Summary (messages):
+ Log file not readable or does not exist on this system.
+ (This is normal in some containers or minimal installs.)
