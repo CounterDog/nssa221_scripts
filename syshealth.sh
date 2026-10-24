@@ -119,36 +119,56 @@ log_message() {
 }
 
 parse_arguments() {
-    OUTPUT_FILE="${1:-}" # if $1 is given, use it as output file; otherwise empty
+    OUTPUT_FILE="${1:-}"
 }
 
-generate_report() {
-    # Re-collect the human-readable metrics (same as Lab 1)
-    local CURRENT_DATE HOSTNAME UPTIME DISK_USAGE MEMORY_USAGE PROCESS_COUNT
+generate_report() { 
+    # Re-collect metrics (same as before) 
+    local CURRENT_DATE HOSTNAME UPTIME DISK_USAGE MEMORY_USAGE PROCESS_COUNT 
 
-    CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
-    HOSTNAME=$(hostname)
-    UPTIME=$(uptime -p)
-    DISK_USAGE=$(df -h / | tail -1)
-    MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
-    PROCESS_COUNT=$(ps -e | wc -l)
-
-    printf "========================================\n"
+    CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S') 
+    HOSTNAME=$(hostname) 
+    UPTIME=$(uptime -p) 
+    DISK_USAGE=$(df -h / | tail -1) 
+    MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}') 
+    PROCESS_COUNT=$(ps -e | wc -l) 
+    
+    # Demonstrate array usage (report_metrics) 
+    local -a report_metrics 
+    report_metrics=( 
+        "Hostname: $HOSTNAME" 
+        "Uptime: $UPTIME" 
+        "Disk /: $DISK_USAGE" 
+        "Memory used: $MEMORY_USAGE" 
+        "Total processes: $PROCESS_COUNT" 
+        "Health status: $([ "${HEALTH_STATUS:-0}" -eq 0 ] && echo "HEALTHY" | | echo "UNHEALTHY")" 
+        ) 
+        
+    printf "========================================\n" 
     printf "System Health Report - %s\n" "$CURRENT_DATE"
-    printf "Hostname : %s\n" "$HOSTNAME"
-    printf "Uptime : %s\n" "$UPTIME"
-    printf "Disk / : %s\n" "$DISK_USAGE"
-    printf "Memory used : %s\n" "$MEMORY_USAGE"
-    printf "Total processes : %s\n" "$PROCESS_COUNT"
-    printf "Health status : %s\n" "$([ "${HEALTH_STATUS:-0}" -eq 0 ] && echo "HEALTHY" || echo "UNHEALTHY - see alerts above")"
     printf "========================================\n"
 
-    # --- NEW: Log Analysis Summary (integrated into every report) ---
-    printf "\n========================================\n"
-    printf "LOG ANALYSIS SUMMARY\n"
+    for metric in "${report_metrics[@]}"; do
+        printf "%s\n" "$metric"
+    done
+
     printf "========================================\n"
-    analyze_logs # uses default /var/log/messages
-    log_message "INFO" "Report successfully generated. Check output for summary"
+
+    # Log analysis is already integrated from Lab 4
+    # (keep the LOG ANALYSIS SUMMARY block here)
+
+    # Professional here-document footer
+    cat << EOF
+
+--- End of Report ---
+Script: syshealth.sh (Lab 5 - Error Handling & Professional Reports)
+Generated: $CURRENT_DATE
+Exit status: ${HEALTH_STATUS:-0} ($( [ "${HEALTH_STATUS:-0}" -eq 0 ] && echo "HEALTHY" || echo "UNHEALTHY"))
+Log file: $HOME/.syshealth.log
+========================================
+EOF
+    
+    log_message "INFO" "Report generated successfully (exit code ${HEALTH_STATUS:-0})"
 }
 
 analyze_logs() {
