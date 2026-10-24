@@ -3,14 +3,16 @@
 # syshealth.sh - System Health & Log Analysis Toolkit
 # Lab 4 - Refactoring into Functions
 # Author: Jonathan Jiang
-# Date: 2026-10-8
+# Date: 2026-10-24
 # ===============================================
 # --- Thresholds (global, used by multiple functions) ---
 CPU_THRESHOLD=75
 MEM_THRESHOLD=85
 DISK_THRESHOLD=85
 
-set -euo pipefail # Trap for logging on error or unexpected exit trap 'log_message "ERROR" "Script exited unexpectedly with code $?"' ERR trap 'log_message "INFO" "Script finished normally with code $?"' EXIT
+set -euo pipefail # Trap for logging on error or unexpected exit 
+trap 'log_message "ERROR" "Script exited unexpectedly with code $?"' ERR 
+trap 'log_message "INFO" "Script finished normally with code $?"' EXIT
 
 print_status() {
     local status="$1"
@@ -82,23 +84,38 @@ run_health_checks() {
     for mount in / /home /var; do
         if ! check_disk_usage "$mount"; then
             overall_status=1
+            log_message "INFO" "Alert at check_disk_usage"
         fi
     done
 
     # Memory check
     if ! check_memory_usage; then
         overall_status=1
+        log_message "INFO" "Alert at check_memory_usage"
     fi
 
     # CPU check
     if ! check_cpu_usage; then
         overall_status=1
+        log_message "INFO" "Alert at check_cpu_usage"
     fi
 
     # Store result for generate_report / exit
     HEALTH_STATUS="$overall_status"
 
     return "$overall_status"
+}
+
+log_message() {
+    local level="$1"
+    local message="$2"
+    local log_file="$HOME/.syshealth.log"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+    # Ensure log directory exists (in case $HOME is unusual)
+    mkdir -p "$(dirname "$log_file")"
+    echo "$timestamp [$level] $message" >> "$log_file"
 }
 
 parse_arguments() {
@@ -131,6 +148,7 @@ generate_report() {
     printf "LOG ANALYSIS SUMMARY\n"
     printf "========================================\n"
     analyze_logs # uses default /var/log/messages
+    log_message "INFO" "Report successfully generated. Check output for summary"
 }
 
 analyze_logs() {
@@ -171,6 +189,8 @@ analyze_logs() {
 
 main() {
     parse_arguments "$@"
+
+    log_message "INFO" "syshealth.sh started" # lab 5
 
     # Run all health checks (prints colored alerts to terminal)
     run_health_checks
