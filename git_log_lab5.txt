@@ -1,0 +1,21 @@
+* 1c758cb (HEAD -> main) debug at line 144
+* 045c663 Add array (local -a) for report_metrics and populate in generate_report and Rewrite generate_report with here-document footer and add logging calls
+* 3788dc3 Implement log_message function with timestamped append to ~/.s yshealth.log
+* 7c24444 Add strict mode set -euo pipefail and trap handlers for ERR/EX IT
+* 5ffe126 Backing up from script assignment 4
+* 1a3d680 (origin/main, origin/HEAD) Successful test of syshealth.sh
+* e3c673d Integrate log analysis summary into generate_report()
+* 50ffdf2 Add graceful missing-log handling and update documentation
+*   c83c2b0 Fixed merge conflicts
+|\  
+| * 889c08f Fix README.md by removing conflict markers
+| * 0d5d178 added dummy file
+| * 6f8add3 added readme
+| * 4f7a8e1 Initial commit
+* 0581da8 Adjusted generate_report output
+* 3db6d6b Added analyze_logs function
+* 1622882 Backing up from Lab 3
+* be05513 Removed files from previous lab
+* 4d955c3 Added git log
+* 2445705 Included functions parse_arguments, generate_report, updated main, and completed testing
+* dd37377 Implemented run_health_checks
