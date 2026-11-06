@@ -140,8 +140,7 @@ parse_arguments() {
                     help)	    usage ;; 
                     version)	version ;;
                     *)	echo "Unknown long option: --${OPTARG}" >&2; usage ;;
-                esac 
-                ;;
+                esac ;;
 
             \?) echo "Invalid option: -$OPTARG" >&2; usage ;;
             :) echo "Option -$OPTARG requires an argument." >&2; usage ;; 
@@ -157,6 +156,37 @@ parse_arguments() {
     # Default mode if none specified
     MODE="${MODE:-report}"
 }
+
+run_mode() {
+    case "${MODE:-report}" in
+        monitor)
+            log_message "INFO" "Running in MONITOR mode" 
+            print_status "CHECK" "Running health checks only..." 
+            run_health_checks ;;
+
+        analyze)
+            log_message "INFO" "Running in ANALYZE mode" 
+            printf "========================================\n"
+            printf "LOG ANALYSIS ONLY\n"
+            printf "========================================\n"
+            analyze_logs ;;
+
+        report)
+            log_message "INFO" "Running in REPORT mode (full)" 
+            run_health_checks || true
+
+            if [ -n "$OUTPUT_FILE" ]; then
+                generate_report > "$OUTPUT_FILE"
+                echo "Full report written to $OUTPUT_FILE"
+            else
+                generate_report
+            fi ;;
+
+        *) echo "Unknown mode: $MODE" >&2; usage ;;
+        
+    esac
+}
+
 
 
 generate_report() { 
@@ -267,7 +297,7 @@ EOF
 version() {
     echo "syshealth.sh version 1.0 (NSSA221 Scripting Series - Capstone)" 
     echo "Built as final project - $(date '+%Y')"
-    echo "Features: Health checks, log analysis, strict mode, persistent logg ing, CLI modes"
+    echo "Features: Health checks, log analysis, strict mode, persistent logging, CLI modes"
     exit 0
 }
 
