@@ -1,0 +1,18 @@
+========================================
+System Health Report - 2026-11-06 14:05:52
+========================================
+Hostname: Silver
+Uptime: up 21 hours, 6 minutes
+Disk /: /dev/nvme0n1p6  363G  142G  221G  40% /
+Memory used: 6.3Gi/62Gi
+Total processes: 407
+Health status: HEALTHY
+Mode: report
+========================================
+
+--- End of Report ---
+Script: syshealth.sh
+Generated: 2026-11-06 14:05:52
+Exit status: 0 (HEALTHY)
+Log file: /home/huakie/.syshealth.log
+========================================

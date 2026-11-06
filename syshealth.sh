@@ -192,7 +192,6 @@ run_mode() {
 
 
 generate_report() {
-    # Re-collect metrics (same as before)
     local CURRENT_DATE HOSTNAME UPTIME DISK_USAGE MEMORY_USAGE PROCESS_COUNT
 
     CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
@@ -202,7 +201,6 @@ generate_report() {
     MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
     PROCESS_COUNT=$(ps -e | wc -l)
 
-    # Demonstrate array usage (report_metrics)
     local -a report_metrics
     report_metrics=(
         "Hostname: $HOSTNAME"
@@ -220,6 +218,8 @@ generate_report() {
     for metric in "${report_metrics[@]}"; do
         printf "%s\n" "$metric"
     done
+
+    printf "Mode: %s\n" "${MODE:-report}"
 
     printf "========================================\n"
 
