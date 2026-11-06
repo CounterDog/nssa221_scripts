@@ -5,13 +5,15 @@
 # Author: Jonathan Jiang
 # Date: 2026-11-6
 # ===============================================
-# --- Thresholds (global, used by multiple functions) ---
+
 CPU_THRESHOLD=75
 MEM_THRESHOLD=85
 DISK_THRESHOLD=85
 
-set -euo pipefail # Trap for logging on error or unexpected exit 
-trap 'log_message "ERROR" "Script exited unexpectedly with code $?"' ERR 
+set -euo pipefail
+
+# Trap for logging on error or unexpected exit
+trap 'log_message "ERROR" "Script exited unexpectedly with code $?"' ERR
 trap 'log_message "INFO" "Script finished normally with code $?"' EXIT
 
 print_status() {
@@ -60,12 +62,12 @@ check_memory_usage() {
         return 0
     fi
 }
-    
+
 check_cpu_usage() {
     local pct threshold
     threshold="$CPU_THRESHOLD"
     pct=$(top -bn1 | grep '^%Cpu' | awk '{print 100 - $8}' | cut -d. -f1)
-    
+
     if (( pct > threshold )); then
         print_status "ALERT" "CPU usage is ${pct}% (threshold ${threshold}%)"
         return 1
@@ -124,26 +126,26 @@ parse_arguments() {
     # Reset OPTIND in case the function is called multiple times
     OPTIND=1
 
-    while getopts ":marhv-:" opt; do 
+    while getopts ":marhv-:" opt; do
         case "$opt" in
             m) MODE="monitor" ;;
             a) MODE="analyze" ;;
             r) MODE="report" ;;
             h) usage ;;
-            i) version ;;
+            v) version ;;
 
             -) # Long options
                 case "${OPTARG}" in
-                    monitor)	MODE="monitor" ;; 
-                    analyze)	MODE="analyze" ;; 
-                    report)	    MODE="report" ;; 
-                    help)	    usage ;; 
+                    monitor)	MODE="monitor" ;;
+                    analyze)	MODE="analyze" ;;
+                    report)	    MODE="report" ;;
+                    help)	    usage ;;
                     version)	version ;;
-                    *)	echo "Unknown long option: --${OPTARG}" >&2; usage ;;
+                    *)	echo "Unknown long option: --${OPTARG}" >&2; usage 1 ;;
                 esac ;;
 
-            \?) echo "Invalid option: -$OPTARG" >&2; usage ;;
-            :) echo "Option -$OPTARG requires an argument." >&2; usage ;; 
+            \?) echo "Invalid option: -$OPTARG" >&2; usage 1 ;;
+            :) echo "Option -$OPTARG requires an argument." >&2; usage 1 ;;
         esac
     done
 
@@ -160,58 +162,58 @@ parse_arguments() {
 run_mode() {
     case "${MODE:-report}" in
         monitor)
-            log_message "INFO" "Running in MONITOR mode" 
-            print_status "CHECK" "Running health checks only..." 
-            run_health_checks ;;
+            log_message "INFO" "Running in MONITOR mode"
+            print_status "CHECK" "Running health checks only..."
+            run_health_checks || true ;;
 
         analyze)
-            log_message "INFO" "Running in ANALYZE mode" 
+            log_message "INFO" "Running in ANALYZE mode"
             printf "========================================\n"
             printf "LOG ANALYSIS ONLY\n"
             printf "========================================\n"
-            analyze_logs ;;
+            analyze_logs "${OUTPUT_FILE:-}" ;;
 
         report)
-            log_message "INFO" "Running in REPORT mode (full)" 
+            log_message "INFO" "Running in REPORT mode (full)"
             run_health_checks || true
 
-            if [ -n "$OUTPUT_FILE" ]; then
+            if [ -n "${OUTPUT_FILE:-}" ]; then
                 generate_report > "$OUTPUT_FILE"
                 echo "Full report written to $OUTPUT_FILE"
             else
                 generate_report
             fi ;;
 
-        *) echo "Unknown mode: $MODE" >&2; usage ;;
-        
+        *) echo "Unknown mode: $MODE" >&2; usage 1 ;;
+
     esac
 }
 
 
 
-generate_report() { 
-    # Re-collect metrics (same as before) 
-    local CURRENT_DATE HOSTNAME UPTIME DISK_USAGE MEMORY_USAGE PROCESS_COUNT 
+generate_report() {
+    # Re-collect metrics (same as before)
+    local CURRENT_DATE HOSTNAME UPTIME DISK_USAGE MEMORY_USAGE PROCESS_COUNT
 
-    CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S') 
-    HOSTNAME=$(hostname) 
-    UPTIME=$(uptime -p) 
-    DISK_USAGE=$(df -h / | tail -1) 
-    MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}') 
-    PROCESS_COUNT=$(ps -e | wc -l) 
-    
-    # Demonstrate array usage (report_metrics) 
-    local -a report_metrics 
-    report_metrics=( 
-        "Hostname: $HOSTNAME" 
-        "Uptime: $UPTIME" 
-        "Disk /: $DISK_USAGE" 
-        "Memory used: $MEMORY_USAGE" 
-        "Total processes: $PROCESS_COUNT" 
-        "Health status: $([ "${HEALTH_STATUS:-0}" -eq 0 ] && echo "HEALTHY" || echo "UNHEALTHY")" 
-        ) 
-        
-    printf "========================================\n" 
+    CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+    HOSTNAME=$(hostname)
+    UPTIME=$(uptime -p)
+    DISK_USAGE=$(df -h / | tail -1)
+    MEMORY_USAGE=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
+    PROCESS_COUNT=$(ps -e | wc -l)
+
+    # Demonstrate array usage (report_metrics)
+    local -a report_metrics
+    report_metrics=(
+        "Hostname: $HOSTNAME"
+        "Uptime: $UPTIME"
+        "Disk /: $DISK_USAGE"
+        "Memory used: $MEMORY_USAGE"
+        "Total processes: $PROCESS_COUNT"
+        "Health status: $([ "${HEALTH_STATUS:-0}" -eq 0 ] && echo "HEALTHY" || echo "UNHEALTHY")"
+    )
+
+    printf "========================================\n"
     printf "System Health Report - %s\n" "$CURRENT_DATE"
     printf "========================================\n"
 
@@ -231,7 +233,7 @@ Exit status: ${HEALTH_STATUS:-0} ($( [ "${HEALTH_STATUS:-0}" -eq 0 ] && echo "HE
 Log file: $HOME/.syshealth.log
 ========================================
 EOF
-    
+
     log_message "INFO" "Report generated successfully (exit code ${HEALTH_STATUS:-0})"
 }
 
@@ -251,10 +253,10 @@ analyze_logs() {
     fi
 
     # Count issues using extended regex (case-insensitive where useful)
-    errors=$(grep -E -i 'ERROR|Error|error' "$log_file" 2>/dev/null | wc -l)
-    warnings=$(grep -E -i 'WARNING|Warning|warning' "$log_file" 2>/dev/null | wc -l)
-    failed_logins=$(grep -E -i 'Failed password|authentication failure|Failed login' "$log_file" 2>/dev/null | wc -l)
-    
+    errors=$(grep -E -i 'ERROR|Error|error' "$log_file" 2>/dev/null | wc -l || true)
+    warnings=$(grep -E -i 'WARNING|Warning|warning' "$log_file" 2>/dev/null | wc -l || true)
+    failed_logins=$(grep -E -i 'Failed password|authentication failure|Failed login' "$log_file" 2>/dev/null | wc -l || true)
+
     # Top 5 most common error/warning messages (cleaned with sed)
     printf "\nTop 5 recurring issues:\n"
     grep -E -i 'ERROR|Error|error|WARNING|Warning|warning|Failed password|authentication failure' "$log_file" 2>/dev/null \
@@ -262,7 +264,7 @@ analyze_logs() {
     | sort \
     | uniq -c \
     | sort -nr \
-    | head -5
+    | head -5 || true
 
     # Summary section
     printf "\nLog Analysis Summary (%s):\n" "$(basename "$log_file")"
@@ -295,7 +297,7 @@ EOF
 }
 
 version() {
-    echo "syshealth.sh version 1.0 (NSSA221 Scripting Series - Capstone)" 
+    echo "syshealth.sh version 1.0 (NSSA221 Scripting Series - Capstone)"
     echo "Built as final project - $(date '+%Y')"
     echo "Features: Health checks, log analysis, strict mode, persistent logging, CLI modes"
     exit 0
@@ -304,21 +306,15 @@ version() {
 main() {
     parse_arguments "$@"
 
-    log_message "INFO" "syshealth.sh started"
+    log_message "INFO" "syshealth.sh started in mode: ${MODE:-report}"
 
-    # Run all health checks (prints colored alerts to terminal)
-    run_health_checks
+    run_mode
 
-    # Generate the structured report (to screen or file)
-    if [ -n "$OUTPUT_FILE" ]; then
-        generate_report > "$OUTPUT_FILE"
-        echo "Report written to $OUTPUT_FILE"
-    else
-        generate_report
+    # For monitor/analyze modes that don't already exit inside generate_report
+    if [ "${MODE:-report}" != "report" ]; then
+        exit "${HEALTH_STATUS:-0}"
     fi
-    
-    # Exit with the aggregated health status from run_health_checks
-    exit "${HEALTH_STATUS:-0}"
+
 }
 
 main "$@"
