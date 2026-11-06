@@ -1,0 +1,21 @@
+* 99d7432 (HEAD -> main) Update main() for full CLI integration and verify backward compatibility
+* 326370f Added cron.txt and update .gitignore
+* cc1c9bf Update main() for full CLI integration, add cron.txt, and veri fy backward compatibility
+* 0d8fde6 Add run_mode function using case/esac for CLI mode dispatching
+* bf78fe9 Implement robust getopts with short and long option support in parse_arguments
+* 6d08258 Add usage() and version() functions with here-document help
+* a86f525 (origin/main, origin/HEAD) Backing up from Lab 5
+* 028acdb Completed Lab 5
+* 1c758cb debug at line 144
+* 045c663 Add array (local -a) for report_metrics and populate in generate_report and Rewrite generate_report with here-document footer and add logging calls
+* 3788dc3 Implement log_message function with timestamped append to ~/.s yshealth.log
+* 7c24444 Add strict mode set -euo pipefail and trap handlers for ERR/EX IT
+* 5ffe126 Backing up from script assignment 4
+* 1a3d680 Successful test of syshealth.sh
+* e3c673d Integrate log analysis summary into generate_report()
+* 50ffdf2 Add graceful missing-log handling and update documentation
+*   c83c2b0 Fixed merge conflicts
+|\  
+| * 889c08f Fix README.md by removing conflict markers
+| * 0d5d178 added dummy file
+| * 6f8add3 added readme
