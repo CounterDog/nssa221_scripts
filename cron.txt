@@ -1,0 +1,16 @@
+# cron.txt - Example crontab entries for syshealth.sh # Copy desired lines into your crontab with: crontab -e #
+# Format: minute hour day-of-month month day-of-week command
+
+# Daily full report at 06:00 (writes dated file)
+
+0 6 * * * cd ~/syshealth-toolkit && ./syshealth.sh --report "daily_report_$(d ate +\%F).txt" >> ~/.syshealth.log 2>&1
+
+# Health monitoring every 30 minutes (only alerts printed, useful for email o n failure)
+*/30 * * * * cd ~/syshealth-toolkit && ./syshealth.sh --monitor >> ~/.sysheal th.log 2>&1
+
+# Log analysis every hour at :15
+15 * * * * cd ~/syshealth-toolkit && ./syshealth.sh --analyze >> ~/.syshealth.log 2>&1
+
+# Full report + email summary every weekday at 07:30 (example)
+30 7 * * 1-5 cd ~/syshealth-toolkit && ./syshealth.sh --report /tmp/syshealth
+_$(date +\%F).txt && mail -s "Daily SysHealth Report" admin@example.com < /tm p/syshealth_$(date +\%F).txt
